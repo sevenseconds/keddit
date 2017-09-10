@@ -2,18 +2,22 @@ package th.`in`.droid.keddit.fragment
 
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_news.*
 import th.`in`.droid.keddit.R
 import th.`in`.droid.keddit.adapter.NewsAdapter
 import th.`in`.droid.keddit.extension.inflate
-import th.`in`.droid.keddit.model.RedditNewsItem
+import th.`in`.droid.keddit.manager.NewsManager
 
-class NewsFragment : Fragment() {
+class NewsFragment : RxBaseFragment() {
+
+    private val newsManager by lazy { NewsManager() }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -23,18 +27,22 @@ class NewsFragment : Fragment() {
         initAdapter()
 
         if (savedInstanceState == null) {
-            val news = (1..10).map {
-                RedditNewsItem(
-                        "author$it",
-                        "Title $it",
-                        it, // number of comments
-                        1457207701L - it * 200, // time
-                        "http://lorempixel.com/200/200/technics/$it", // image url
-                        "url"
-                )
-            }
-            (news_list.adapter as NewsAdapter).addNews(news)
+            requestNews()
         }
+    }
+
+    private fun requestNews() {
+        val subscription = newsManager.getNews()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { retrievedNews ->
+                            (news_list.adapter as NewsAdapter).addNews(retrievedNews)
+                        },
+                        { e ->
+                            Toast.makeText(activity.applicationContext, e.message, Toast.LENGTH_SHORT).show()
+                        })
+        subscriptions.add(subscription)
     }
 
     private fun initAdapter() {
