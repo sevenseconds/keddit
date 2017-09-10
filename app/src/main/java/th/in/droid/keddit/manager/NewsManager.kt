@@ -2,22 +2,25 @@ package th.`in`.droid.keddit.manager
 
 import io.reactivex.Observable
 import th.`in`.droid.keddit.model.RedditNewsItem
+import th.`in`.droid.keddit.service.RestApi
 
-class NewsManager {
-    fun getNews(): Observable<List<RedditNewsItem>> {
+class NewsManager(private val api: RestApi = RestApi()) {
+
+    fun getNews(limit: String = "10"): Observable<List<RedditNewsItem>> {
         return Observable.create {
             subscriber ->
-            val news = (1..10).map {
-                RedditNewsItem(
-                        "author$it",
-                        "Title $it",
-                        it, // number of comments
-                        1457207701L - it * 200, // time
-                        "http://lorempixel.com/200/200/technics/$it", // image url
-                        "url"
-                )
+            val callResponse = api.getNews("", limit)
+            val response = callResponse.execute()
+            if (response.isSuccessful) {
+                val news = response.body()?.data?.children?.map {
+                    val item = it.data
+                    RedditNewsItem(item.author, item.title, item.num_comments, item.created, item.thumbnail, item.url)
+                }
+                subscriber.onNext(news)
+                subscriber.onComplete()
+            } else {
+                subscriber.onError(Throwable(response.message()))
             }
-            subscriber.onNext(news)
         }
     }
 }

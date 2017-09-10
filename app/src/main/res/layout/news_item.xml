@@ -28,9 +28,9 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/time"
         app:layout_constraintStart_toEndOf="@+id/img_thumbnail"
-        app:layout_constraintTop_toBottomOf="@+id/title"
         tools:text="Author" />
 
     <TextView
@@ -49,12 +49,16 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/img_thumbnail"
         app:layout_constraintTop_toTopOf="parent"
+        tools:singleLine="false"
         tools:text="Title" />
 
     <TextView
