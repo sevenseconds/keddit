@@ -2,7 +2,6 @@ package th.`in`.droid.keddit.fragment
 
 
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,17 +12,24 @@ import kotlinx.android.synthetic.main.fragment_news.*
 import th.`in`.droid.keddit.R
 import th.`in`.droid.keddit.adapter.NewsAdapter
 import th.`in`.droid.keddit.extension.inflate
+import th.`in`.droid.keddit.layoutmanager.WrapContentLinearLayoutManager
+import th.`in`.droid.keddit.listener.InfiniteScrollListener
 import th.`in`.droid.keddit.manager.NewsManager
+import th.`in`.droid.keddit.model.RedditNews
 
 class NewsFragment : RxBaseFragment() {
 
+    private var redditNews: RedditNews? = null
     private val newsManager by lazy { NewsManager() }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
         news_list.setHasFixedSize(true)
-        news_list.layoutManager = LinearLayoutManager(context)
+        val linearLayoutManager = WrapContentLinearLayoutManager(context)
+        news_list.layoutManager = linearLayoutManager
+        news_list.clearOnScrollListeners()
+        news_list.addOnScrollListener(InfiniteScrollListener({requestNews()}, linearLayoutManager))
         initAdapter()
 
         if (savedInstanceState == null) {
@@ -32,12 +38,13 @@ class NewsFragment : RxBaseFragment() {
     }
 
     private fun requestNews() {
-        val subscription = newsManager.getNews()
+        val subscription = newsManager.getNews(redditNews?.after ?: "")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { retrievedNews ->
-                            (news_list.adapter as NewsAdapter).addNews(retrievedNews)
+                            redditNews = retrievedNews
+                            (news_list.adapter as NewsAdapter).addNews(retrievedNews.news)
                         },
                         { e ->
                             Toast.makeText(activity.applicationContext, e.message, Toast.LENGTH_SHORT).show()
