@@ -19,21 +19,45 @@ import th.`in`.droid.keddit.model.RedditNews
 
 class NewsFragment : RxBaseFragment() {
 
+    companion object {
+        private val KEY_REDDIT_NEWS = "redditNews"
+
+        fun newInstance(): NewsFragment {
+            return NewsFragment()
+        }
+    }
+
     private var redditNews: RedditNews? = null
     private val newsManager by lazy { NewsManager() }
+
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        news_list.setHasFixedSize(true)
-        val linearLayoutManager = WrapContentLinearLayoutManager(context)
-        news_list.layoutManager = linearLayoutManager
-        news_list.clearOnScrollListeners()
-        news_list.addOnScrollListener(InfiniteScrollListener({requestNews()}, linearLayoutManager))
+        news_list.apply {
+            setHasFixedSize(true)
+            val linearLayoutManager = WrapContentLinearLayoutManager(context)
+            layoutManager = linearLayoutManager
+            clearOnScrollListeners()
+            addOnScrollListener(InfiniteScrollListener({requestNews()}, linearLayoutManager))
+
+        }
+
         initAdapter()
 
-        if (savedInstanceState == null) {
+        if (savedInstanceState != null && savedInstanceState.containsKey(KEY_REDDIT_NEWS)) {
+            redditNews = savedInstanceState.get(KEY_REDDIT_NEWS) as RedditNews
+            (news_list.adapter as NewsAdapter).clearAndAddNews(redditNews!!.news)
+        } else {
             requestNews()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val news = (news_list.adapter as NewsAdapter).getNews()
+        if (redditNews != null && news.isNotEmpty()) {
+            outState.putParcelable(KEY_REDDIT_NEWS, redditNews?.copy(news = news))
         }
     }
 
@@ -65,12 +89,4 @@ class NewsFragment : RxBaseFragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return container?.inflate(R.layout.fragment_news)
     }
-
-    companion object {
-
-        fun newInstance(): NewsFragment {
-            return NewsFragment()
-        }
-    }
-
 }
